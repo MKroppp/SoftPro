@@ -530,6 +530,18 @@ input:focus {
     margin-bottom: 20px;
 }
 
+.notifications-content {
+    flex: 1;
+    background-color: white;
+    border-radius: 30px;
+    padding: 40px;
+    filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.3));
+}
+
+.notifications-content h1{
+    margin-bottom: 20px;
+}
+
 .divider {
     width: auto;
     border-bottom: 0.5px solid transparent;
@@ -904,8 +916,26 @@ td, th {
     }
 }
 
+.profile-container {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-/* NOTIFICATIONS */
+.profile-info {
+    position: relative;
+    cursor: pointer;
+    font-weight: 600;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    min-height: 30px;
+}
+
+.profile-info input{
+    width: 200px;
+}
 
 .notifications-container {
     display: flex;
@@ -913,7 +943,6 @@ td, th {
     gap: 20px;
 }
 
-/* Скрываем стандартный checkbox */
 .custom-checkbox {
     position: relative;
     padding-left: 45px;

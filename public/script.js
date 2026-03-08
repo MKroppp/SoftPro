@@ -1,28 +1,27 @@
+const supabaseUrl = "https://gkrqbityqsceivoakjqg.supabase.co";
+const supabaseKey = "sb_publishable_NmdFQqEWAyJ8B7l7H4rJYQ_1JyVdO8g";
+
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const user = JSON.parse(localStorage.getItem("user"));
     const accountButton = document.querySelector(".account-button");
     const logoutButton = document.querySelector(".logout-button");
     if (user) {
-        // Показываем имя
         accountButton.innerText = user.name;
 
-        // Показываем кнопку выхода
         logoutButton.style.display = "inline-block";
 
-        // Переход на профиль
         accountButton.addEventListener("click", () => {
             window.location.href = "profile.html";
         });
-
-        // Выход
         logoutButton.addEventListener("click", () => {
             localStorage.removeItem("user");
             window.location.href = "index.html";
         });
 
     } else {
-        // Если не авторизован
         accountButton.addEventListener("click", () => {
             window.location.href = "login.html";
         });
@@ -35,35 +34,34 @@ document.addEventListener("DOMContentLoaded", function () {
         "notifyMarketing"
     ];
     const saveButton = document.getElementById("saveNotifications");
+
     checkboxes.forEach(id => {
-        const savedValue = localStorage.getItem(id);
-        if (savedValue === "true") {
-            document.getElementById(id).checked = true;
+        const checkbox = document.getElementById(id);
+        if (checkbox) {
+            const savedValue = localStorage.getItem(id);
+            checkbox.checked = savedValue === "true";
         }
     });
+
     if (saveButton) {
         saveButton.addEventListener("click", () => {
             checkboxes.forEach(id => {
-                const isChecked = document.getElementById(id).checked;
-                localStorage.setItem(id, isChecked);
+                const checkbox = document.getElementById(id);
+                if (checkbox) {
+                    localStorage.setItem(id, checkbox.checked);
+                }
             });
+
+            const message = document.getElementById("saveMessage");
+            if (message) {
+                message.textContent = "Saved";
+                message.style.opacity = "1";
+                setTimeout(() => {
+                    message.style.opacity = "0";
+                }, 2000);
+            }
         });
     }
-
-    saveButton.addEventListener("click", () => {
-    checkboxes.forEach(id => {
-        const checkbox = document.getElementById(id);
-        localStorage.setItem(id, checkbox.checked);
-    });
-
-    const message = document.getElementById("saveMessage");
-    message.textContent = "Saved!";
-    message.style.opacity = "1";
-
-    setTimeout(() => {
-        message.style.opacity = "0";
-    }, 2000);
-    });
 
     var accordions = document.querySelectorAll(".accordion");
     accordions.forEach(function (acc) {
@@ -129,29 +127,79 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-function handleCredentialResponse(response) {
-        console.log("Encoded JWT ID token: " + response.credential);
+async function handleCredentialResponse(response) {
+    console.log("Encoded JWT ID token: " + response.credential);
+    const data = parseJwt(response.credential);
+    console.log(data);
+    localStorage.setItem("user", JSON.stringify(data));
 
-        // Декодируем JWT чтобы получить данные пользователя
-        const data = parseJwt(response.credential);
-
-        console.log(data);
-
+    const { error } = await supabaseClient
+        .from("users")
+        .upsert([
+            {
+                name: data.name,
+                email: data.email
+            }],{ onConflict: "email" });
+    if (error) {
+        console.error("Supabase insert error:", error);
+        alert("Ошибка при сохранении в базу!");
+    } else {
+        console.log("User saved to Supabase!");
         alert("Welcome " + data.name);
-
-        // Можно сохранить пользователя
-        localStorage.setItem("user", JSON.stringify(data));
-
-        // Перенаправление
-        window.location.href = "index.html";
+        window.location.href = "profile.html";
     }
+}
 
-    function parseJwt(token) {
-        let base64Url = token.split('.')[1];
-        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+function parseJwt(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
 
-        return JSON.parse(jsonPayload);
+    return JSON.parse(jsonPayload);
+}
+    
+
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!window.location.pathname.includes("profile.html")) return;
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+        window.location.href = "login.html";
+        return;
     }
+    const { data, error } = await supabaseClient
+        .from("users")
+        .select("*")
+        .eq("email", user.email)
+        .single();
+    if (error) {
+        console.error("Ошибка при загрузке профиля:", error);
+    } else if (data) {
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("surname").value = data.surname || "";
+        document.getElementById("email").value = data.email || "";
+        document.getElementById("phonenumber").value = data.phonenumber || "";
+    }
+    const saveButton = document.getElementById("saveProfileInfo");
+    saveButton.addEventListener("click", async () => {
+        const updatedData = {
+            name: document.getElementById("name").value,
+            surname: document.getElementById("surname").value,
+            phonenumber: document.getElementById("phonenumber").value
+        };
+
+        const { error } = await supabaseClient
+            .from("users")
+            .update(updatedData)
+            .eq("email", user.email);
+
+        if (error) {
+            alert("Ошибка при сохранении данных!");
+            console.error(error);
+        } else {
+            alert("Данные успешно обновлены!");
+        }
+    });
+});
+
