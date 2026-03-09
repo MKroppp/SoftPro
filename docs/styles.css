@@ -937,6 +937,23 @@ td, th {
     width: 200px;
 }
 
+.security-container{
+    max-width:500px;
+}
+
+.security-section{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    margin-top:20px;
+}
+
+.security-section input{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
 .notifications-container {
     display: flex;
     flex-direction: column;
