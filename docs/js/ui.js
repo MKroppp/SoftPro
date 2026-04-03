@@ -37,5 +37,24 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    const purchaseBtn = document.getElementById("purchaseButton");
+const overlay = document.getElementById("overlay");
+const closeModal = document.getElementById("closeModal");
+
+purchaseBtn.addEventListener("click", () => {
+    overlay.style.display = "flex";
+});
+
+closeModal.addEventListener("click", () => {
+    overlay.style.display = "none";
+});
+
+// закрытие по клику вне окна
+overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+        overlay.style.display = "none";
+    }
+});
+
 });
 
